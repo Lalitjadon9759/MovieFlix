@@ -1,0 +1,265 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOVIE flix</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0f172a;
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            background: #1e293b;
+            padding: 20px;
+            margin: 0;
+            font-size: 32px;
+            letter-spacing: 2px;
+        }
+
+        #searchmovie {
+            width: 60%;
+            max-width: 400px;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 8px;
+            border: none;
+            outline: none;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-left: 10px;
+            border: none;
+            border-radius: 8px;
+            background-color: #38bdf8;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background-color: #0ea5e9;
+        }
+
+        #container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 1100px;
+            justify-content: center;
+        }
+
+        #container div {
+            background-color: #1e293b;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            transition: transform 0.3s;
+        }
+
+        #container div:hover {
+            transform: scale(1.05);
+        }
+
+        img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        p {
+            color: #f87171;
+            font-size: 18px;
+        }
+
+        /* Added CSS */
+
+        input, button, select {
+            margin-top: 10px;
+        }
+
+        select {
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            background-color: #1e293b;
+            color: #fff;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        h1:nth-of-type(2) {
+            font-size: 20px;
+            margin-top: 20px;
+            color: #38bdf8;
+        }
+
+        button[onclick^="filtermovies"] {
+            margin: 10px 5px;
+            background-color: #22c55e;
+            color: white;
+        }
+
+        button[onclick^="filtermovies"]:hover {
+            background-color: #16a34a;
+        }
+
+        button[onclick="previouspag()"],
+        button[onclick="nextpage()"] {
+            margin: 20px 10px;
+            background-color: #facc15;
+            color: #000;
+        }
+
+        button[onclick="previouspag()"]:hover,
+        button[onclick="nextpage()"]:hover {
+            background-color: #eab308;
+        }
+
+        #container h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 600px) {
+            #searchmovie {
+                width: 80%;
+            }
+
+            img {
+                height: 250px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>MOVIE FLIX</h1>
+
+    <input type="text" id="searchmovie" placeholder="Search for movies...">
+    <button onclick="searchmovie(page)">Search Movie</button>
+
+    <br><br>
+
+    <select id="sortoptions" onchange="sortmovies()">
+        <option value="year-asc">oldest</option>
+        <option value="year-desc">newest</option>
+    </select>
+
+    <h1>filter by series episodes movies</h1>
+
+    <button onclick="filtermovies('series')">series</button>
+    <button onclick="filtermovies('episode')">episodes</button>
+    <button onclick="filtermovies('movie')">movies</button>
+
+    <div id="container"></div>
+
+    <button onclick="previouspag()">previous</button>
+    <button onclick="nextpage()">next</button>
+
+</body>
+
+<script>
+    let api_key="4a8a5c1a"
+    let page=1;
+    let movies=[]
+
+    async function searchmovie(page){
+        let query=document.getElementById("searchmovie").value;
+        let container=document.getElementById("container");
+
+        container.innerHTML = "";
+
+        let res=await fetch(`https://www.omdbapi.com/?apikey=${api_key}&s=${query}&page=${page}`);
+        let data=await res.json()
+        let newdata=data.Search;
+
+        if(!newdata){
+            let p=document.createElement("p");
+            p.textContent="Data not available";
+            container.appendChild(p)
+        }else{
+            movies=data.Search;
+            displaydata(movies)
+        }
+    }
+
+    function displaydata(movies){
+        let container=document.getElementById("container");
+        container.innerHTML = "";
+
+        movies.forEach((movie)=>{
+            let newdiv=document.createElement("div");
+
+            newdiv.innerHTML = `
+                <h3>${movie.Title} (${movie.Year})</h3>
+                <img src="${movie.Poster}" alt="${movie.Title}">
+            `;
+
+            container.appendChild(newdiv);
+        })
+    }
+
+    function sortmovies(){
+        let data=[...movies];
+        let sortmovies=document.getElementById("sortoptions").value;
+
+        if(sortmovies==="year-asc"){
+            data.sort((a,b)=>parseInt(a.Year)-parseInt(b.Year));
+        }else{
+            data.sort((a,b)=>parseInt(b.Year)-parseInt(a.Year));
+        }
+
+        displaydata(data)
+    }
+
+    async function filtermovies(type){
+        let query = document.getElementById("searchmovie").value;
+        let container = document.getElementById("container");
+
+        container.innerHTML = "";
+
+        let res = await fetch(`https://www.omdbapi.com/?apikey=${api_key}&s=${query}&type=${type}`);
+        let data = await res.json();
+
+        if (!data.Search) {
+            let p = document.createElement("p");
+            p.textContent = "No results found";
+            container.appendChild(p);
+        } else {
+            movies = data.Search;
+            displaydata(movies);
+        }
+    }
+
+    function previouspag(){
+        if(page>1){
+            page-=1;
+            searchmovie(page)
+        }
+    }
+
+    function nextpage(){
+        page+=1;
+        searchmovie(page)
+    }
+</script>
+</html>
